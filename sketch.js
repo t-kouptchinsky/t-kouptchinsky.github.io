@@ -1,5 +1,5 @@
 // Import the ScJs library.
-import { SvJs } from "./node_modules/svjs/src/index.js";
+import { SvJs } from "./test/index.js";
 
 // Parent SVG.
 const svg =  new SvJs();
