@@ -1,8 +1,14 @@
 /* styles.css */
 img {
     max-width: 600px;
-    height: auto;
-    border-radius: 100%; /* Apply rounded corners for a profile picture effect */
+    height:auto;
+    border-radius: 0%; /* Apply rounded corners for a profile picture effect */
+}
+center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 50%;
 }
 
 body {
@@ -16,11 +22,12 @@ body {
 img {
     float: right;
     margin-left: 10px; /* Add some margin to separate text and image */
+    margin-top: 10px;
 }
 
 
 .image-tooltip {
-    position: relative;
+    position:relative;
     display: inline-block;
 }
 
