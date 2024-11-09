@@ -24,6 +24,8 @@ let palettes = [
 
 //pick random hue
 let hue = random(0,360);
+//pick random chance
+let luck = random(10,70);
 
 //pick random palette
 /*let pick = random(0,3)
@@ -88,8 +90,9 @@ for (let y=0; y  < cropGridSizeY; y += incrementY) {
         });
         */
         //run a loop based on CHANCE
-        if (chance(60)) {
-            for (let i = 0; i < (cellSizeX + cellSizeY)/2; i+=1) {
+        if (chance(luck)) {
+            let density = random((cellSizeX + cellSizeY)/10, cellSizeX + cellSizeY);
+            for (let i = 0; i < density; i+=1) {
             grid.create('line').set({
                 x1: random(x, x+ cellSizeX),
                 y1: random(y, y + cellSizeY),
