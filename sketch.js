@@ -39,6 +39,9 @@ let gridSizeX = random(100,1000);
 let gridSizeY = random(100,1000);
 let rowsX = random(1, Math.floor(gridSizeX/10));
 let rowsY = random(1, Math.floor(gridSizeY/10));
+
+let matchBoxes = []; //will be a matrix of the size of the grid, each entry containing the svg line elements, if the cell is alive
+let densityGrid = []; //same but the entry just tells the numbers of lines if the cell is alive, or 0 if it is dead, the density will be negative if the actual state is dead but the previous one is alive with the corresponding density
 //let rowsX= 5;
 //let rowsY=4;
 let spacingX =random(10,50);   //expressed in percentage of division result
@@ -51,9 +54,14 @@ let incrementY = Math.floor(gridSizeY/rowsY);
 let cropGridSizeY = incrementY*rowsY
 let cellSizeY = Math.abs(((100-spacingY)/100)*incrementY);
 
-//Nested loop to visualise the grid.
-for (let y=0; y  < cropGridSizeY; y += incrementY) {
+let matchSup = cellSizeX + cellSizeY; // maximum number of matches in a case of the current grid
 
+//Nested loop to visualise the grid.
+let currentY = 0;
+for (let y=0; y  < cropGridSizeY; y += incrementY) {
+    //create a now line to both matrixes 
+    matchBoxes.push([]);
+    densityGrid.push([]);
     // Increment the hue
     hue = (hue >= 360) ? (hue - 360) + (120 / rowsY) : hue + (120/rowsY); 
     for (let x=0; x < cropGridSizeX; x+=incrementX) {
@@ -91,24 +99,20 @@ for (let y=0; y  < cropGridSizeY; y += incrementY) {
         */
         //run a loop based on CHANCE
         if (chance(luck)) {
-            let density = random((cellSizeX + cellSizeY)/10, cellSizeX + cellSizeY);
-            for (let i = 0; i < density; i+=1) {
-            grid.create('line').set({
-                x1: random(x, x+ cellSizeX),
-                y1: random(y, y + cellSizeY),
-                x2: random(x, x+ cellSizeX),
-                y2: random(y, y + cellSizeY),
-                stroke: `hsl(${hue} 80% 80% / 0.33)`
-            });
-            }
+            fill(x,y,hue);
+        } else {
+            matchBoxes[currentY].push([]);
+            densityGrid[currentY].push([0]);
         }
         //create a square to frame
         /*grid.create('rect').set({
             x: x, y:y, width: cellSizeX, height:cellSizeY, fill: 'none', stroke: '#eee',
         });
         */
-        
+    //update the index x
     }
+    //update the index y
+    currentY += 1;
 }
 
 //Nested loop to visualise the palettes.
@@ -143,3 +147,54 @@ function chance(pourcent){
     let test= random(0,100);
     return (test<=pourcent)
 }
+
+function fill(x,y,hue){
+    let density = random(matchSup/10, matchSup);
+    densityGrid[currentY].push([density]);
+    let matchBox = [];
+        for (let i = 0; i < density; i+=1) {
+            let line = grid.create('line').set({
+                x1: random(x, x+ cellSizeX),
+                y1: random(y, y + cellSizeY),
+                x2: random(x, x+ cellSizeX),
+                y2: random(y, y + cellSizeY),
+                stroke: `hsl(${hue} 80% 80% / 0.33)`
+            });
+            matchBox.push(line);
+        }
+    matchBoxes[currentY].push([matchBox]);
+}
+
+let indices = Array(rowsY).fill(Array(rowsX).fill(0)); //initialize an indices matrix 
+
+ function oneDayOfLife(time=0) {
+    for(let y=0; y < rowsY; y++){
+        // Increment the hue
+        hue = (hue >= 360) ? (hue - 360) + (120 / rowsY) : hue + (120/rowsY);
+        for(let x = 0; x < rowsX; x++){
+            let density = densityGrid[y][x];
+            let index = indices[y][x];
+            if(density + index < 0) {
+                let line = matchBoxes[y][x][index];
+                line.set({stroke: 'none'});
+                indices[y][x] +=1;
+            }
+            if(density - index > 0) { //!!\\ we will have to put the index at the level of density to make the persistent cell steady
+                let posX = x*incrementX;
+                let posY = y*incrementY;
+                let line = grid.create('line').set({
+                    x1: random(posX, posX+ cellSizeX),
+                    y1: random(posY, posY + cellSizeY),
+                    x2: random(posX, posX+ cellSizeX),
+                    y2: random(posY, posY + cellSizeY),
+                    stroke: `hsl(${hue} 80% 80% / 0.33)`
+                });
+                matchBoxes[y][x].push(line);
+                indices[y][x] +=1;
+            }
+        }
+    }
+    requestAnimationFrame(oneDayOfLife);
+};
+
+oneDayOfLife();
