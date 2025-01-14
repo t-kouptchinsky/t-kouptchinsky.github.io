@@ -35,13 +35,14 @@ let pickedPalette = palettes[pick];
 let grid = svg.create('g');
 
 //Setting grid variables. Division of grid in rectangles.
-let gridSizeX = random(100,1000);
-let gridSizeY = random(100,1000);
-let rowsX = random(1, Math.floor(gridSizeX/10));
-let rowsY = random(1, Math.floor(gridSizeY/10));
+let gridSizeX = 500//random(100,1000);
+let gridSizeY = 500//random(100,1000);
+let rowsX = 4//random(1, Math.floor(gridSizeX/10));
+let rowsY = 4//random(1, Math.floor(gridSizeY/10));
 
 let matchBoxes = []; //will be a matrix of the size of the grid, each entry containing the svg line elements, if the cell is alive
 let densityGrid = []; //same but the entry just tells the numbers of lines if the cell is alive, or 0 if it is dead, the density will be negative if the actual state is dead but the previous one is alive with the corresponding density
+let hueGrid = [];
 //let rowsX= 5;
 //let rowsY=4;
 let spacingX =random(10,50);   //expressed in percentage of division result
@@ -62,6 +63,7 @@ for (let y=0; y  < cropGridSizeY; y += incrementY) {
     //create a now line to both matrixes 
     matchBoxes.push([]);
     densityGrid.push([]);
+    hueGrid.push([]);
     // Increment the hue
     hue = (hue >= 360) ? (hue - 360) + (120 / rowsY) : hue + (120/rowsY); 
     for (let x=0; x < cropGridSizeX; x+=incrementX) {
@@ -102,8 +104,9 @@ for (let y=0; y  < cropGridSizeY; y += incrementY) {
             fill(x,y,hue);
         } else {
             matchBoxes[currentY].push([]);
-            densityGrid[currentY].push([0]);
+            densityGrid[currentY].push(0);
         }
+        hueGrid[currentY].push([hue]);
         //create a square to frame
         /*grid.create('rect').set({
             x: x, y:y, width: cellSizeX, height:cellSizeY, fill: 'none', stroke: '#eee',
@@ -150,7 +153,8 @@ function chance(pourcent){
 
 function fill(x,y,hue){
     let density = random(matchSup/10, matchSup);
-    densityGrid[currentY].push([density]);
+    densityGrid[currentY].push(density);
+    
     let matchBox = [];
         for (let i = 0; i < density; i+=1) {
             let line = grid.create('line').set({
@@ -162,26 +166,30 @@ function fill(x,y,hue){
             });
             matchBox.push(line);
         }
-    matchBoxes[currentY].push([matchBox]);
+    matchBoxes[currentY].push(matchBox);
 }
 
-let indices = Array(rowsY).fill(Array(rowsX).fill(0)); //initialize an indices matrix 
+let indices = JSON.parse(JSON.stringify(densityGrid)); //copy NOT by reference
+console.log(indices);
+
+
+update();
 
  function oneDayOfLife(time=0) {
+    let isEqual = true;
     for(let y=0; y < rowsY; y++){
-        // Increment the hue
-        hue = (hue >= 360) ? (hue - 360) + (120 / rowsY) : hue + (120/rowsY);
         for(let x = 0; x < rowsX; x++){
             let density = densityGrid[y][x];
             let index = indices[y][x];
             if(density + index < 0) {
                 let line = matchBoxes[y][x][index];
                 line.set({stroke: 'none'});
-                indices[y][x] +=1;
+                indices[y][x] = index + 1;
             }
             if(density - index > 0) { //!!\\ we will have to put the index at the level of density to make the persistent cell steady
                 let posX = x*incrementX;
                 let posY = y*incrementY;
+                let hue = hueGrid[y][x];
                 let line = grid.create('line').set({
                     x1: random(posX, posX+ cellSizeX),
                     y1: random(posY, posY + cellSizeY),
@@ -190,11 +198,59 @@ let indices = Array(rowsY).fill(Array(rowsX).fill(0)); //initialize an indices m
                     stroke: `hsl(${hue} 80% 80% / 0.33)`
                 });
                 matchBoxes[y][x].push(line);
-                indices[y][x] +=1;
+                indices[y][x] = index + 1;
             }
+            if(!(indices[y][x] == Math.abs(densityGrid[y][x]))) { isEqual = false};
         }
     }
-    requestAnimationFrame(oneDayOfLife);
+    if(isEqual){
+        update();
+    }
+    setTimeout(oneDayOfLife, 100);
 };
 
 oneDayOfLife();
+
+function update(){   //could also be called "new morning"
+    let oldGrid = JSON.parse(JSON.stringify(densityGrid)); //copy NOT by reference
+    for(let y = 0; y < rowsY; y ++){
+        for(let x = 0; x < rowsX; x ++){
+            indices[y][x] = 0;  //reset index
+            let neighbourNum = neighbourNumber(oldGrid, x, y);
+            
+            if(densityGrid[y][x] < 0) { 
+                densityGrid[y][x] = 0; 
+            } //if died last day, take act of the death, replace index to 0
+
+            let density = densityGrid[y][x];
+
+            if((3 < neighbourNum || neighbourNum < 2) && density > 0) { 
+                densityGrid[y][x] = -density;
+            } //if alive, dies of loneliness of overpopulation
+
+            if( (2 == neighbourNum || 3 == neighbourNum) && density > 0) {
+                indices[y][x] = density;
+            } //if alive, remain alive, set the index at the density
+
+            if(3 == neighbourNum && density == 0) {
+                density = random(matchSup/10, matchSup);
+                densityGrid[y][x] = density;
+            } //if dead, birth by reproduction
+        }
+    }
+    
+}
+
+function neighbourNumber(densityGrid, x, y){
+    let neighbourNum = 0;
+    for(let i = -1; i < 2; i++){
+        for(let j = -1; j < 2; j++){
+            if( x + i >= 0 && x + i < rowsX && y + j >= 0 && y + j < rowsY && !(i == j && i== 0)){
+                if( densityGrid[y+j][x+i] > 0){
+                    neighbourNum += 1;
+                }
+            }
+        }
+    }    
+    return neighbourNum;
+}
