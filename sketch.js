@@ -35,10 +35,10 @@ let pickedPalette = palettes[pick];
 let grid = svg.create('g');
 
 //Setting grid variables. Division of grid in rectangles.
-let gridSizeX = 500//random(100,1000);
-let gridSizeY = 500//random(100,1000);
-let rowsX = 4//random(1, Math.floor(gridSizeX/10));
-let rowsY = 4//random(1, Math.floor(gridSizeY/10));
+let gridSizeX = random(100,1000);
+let gridSizeY = random(100,1000);
+let rowsX = random(1, Math.floor(gridSizeX/10));
+let rowsY = random(1, Math.floor(gridSizeY/10));
 
 let matchBoxes = []; //will be a matrix of the size of the grid, each entry containing the svg line elements, if the cell is alive
 let densityGrid = []; //same but the entry just tells the numbers of lines if the cell is alive, or 0 if it is dead, the density will be negative if the actual state is dead but the previous one is alive with the corresponding density
@@ -170,10 +170,7 @@ function fill(x,y,hue){
 }
 
 let indices = JSON.parse(JSON.stringify(densityGrid)); //copy NOT by reference
-console.log(indices);
-
-
-update();
+update();   
 
  function oneDayOfLife(time=0) {
     let isEqual = true;
@@ -181,12 +178,13 @@ update();
         for(let x = 0; x < rowsX; x++){
             let density = densityGrid[y][x];
             let index = indices[y][x];
-            if(density + index < 0) {
-                let line = matchBoxes[y][x][index];
+            if(density < 0) {
+                let line = matchBoxes[y][x][0];
                 line.set({stroke: 'none'});
-                indices[y][x] = index + 1;
+                matchBoxes[y][x].splice(0,1);
+                densityGrid[y][x] = density + 1;
             }
-            if(density - index > 0) { //!!\\ we will have to put the index at the level of density to make the persistent cell steady
+            if(density > index) { //!!\\ we will have to put the index at the level of density to make the persistent cell steady
                 let posX = x*incrementX;
                 let posY = y*incrementY;
                 let hue = hueGrid[y][x];
@@ -206,16 +204,17 @@ update();
     if(isEqual){
         update();
     }
-    setTimeout(oneDayOfLife, 100);
+    requestAnimationFrame(oneDayOfLife);
 };
 
 oneDayOfLife();
 
 function update(){   //could also be called "new morning"
     let oldGrid = JSON.parse(JSON.stringify(densityGrid)); //copy NOT by reference
+    let oldIndices = JSON.parse(JSON.stringify(indices));
     for(let y = 0; y < rowsY; y ++){
         for(let x = 0; x < rowsX; x ++){
-            indices[y][x] = 0;  //reset index
+            oldIndices[y][x] = 0;  //reset index
             let neighbourNum = neighbourNumber(oldGrid, x, y);
             
             if(densityGrid[y][x] < 0) { 
@@ -226,10 +225,10 @@ function update(){   //could also be called "new morning"
 
             if((3 < neighbourNum || neighbourNum < 2) && density > 0) { 
                 densityGrid[y][x] = -density;
-            } //if alive, dies of loneliness of overpopulation
+            } //if alive here, dies of loneliness of overpopulation (index stays 0)
 
             if( (2 == neighbourNum || 3 == neighbourNum) && density > 0) {
-                indices[y][x] = density;
+                oldIndices[y][x] = density;
             } //if alive, remain alive, set the index at the density
 
             if(3 == neighbourNum && density == 0) {
@@ -238,6 +237,7 @@ function update(){   //could also be called "new morning"
             } //if dead, birth by reproduction
         }
     }
+    indices = oldIndices;
     
 }
 
