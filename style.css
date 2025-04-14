@@ -1,0 +1,45 @@
+body {
+  margin: 0;
+  background-color: #202020;
+}
+
+#container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/*wheat title*/
+h1 {
+  color: wheat; /* Change text color */
+  font-size: 2em; /* Change font size */
+  text-align: center; /* Center the text */
+}
+
+/*white title*/
+h2 {
+  color: white; /* Change text color */
+  font-size: 2em; /* Change font size */
+  text-align: center; /* Center the text */
+}
+
+/*list*/
+li {
+  color: white; /* Change text color */
+}
+
+/*link*/
+a {
+  color: antiquewhite; /* Change text color */
+}
+
+/*explanation after a or idk*/
+p {
+  color: white; /* Change text color */
+}
+
+/*idk man*/
+ol {
+  color: white; /* Change text color */
+}
