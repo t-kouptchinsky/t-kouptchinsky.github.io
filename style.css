@@ -10,6 +10,14 @@ body {
   height: 100vh;
 }
 
+/*center class for images*/
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+}
+
 /*wheat title*/
 h1 {
   color: wheat; /* Change text color */
