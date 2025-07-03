@@ -223,11 +223,11 @@ function update(){   //could also be called "new morning"
 
             let density = densityGrid[y][x];
 
-            if((3 < neighbourNum || neighbourNum < 2) && density > 0) { 
+            if((3 < neighbourNum || neighbourNum == 1) && density > 0) { 
                 densityGrid[y][x] = -density;
             } //if alive here, dies of loneliness of overpopulation (index stays 0)
 
-            if( (2 == neighbourNum || 3 == neighbourNum) && density > 0) {
+            if( (2 == neighbourNum || 3 == neighbourNum || 0 == neighbourNum ) && density > 0) {
                 oldIndices[y][x] = density;
             } //if alive, remain alive, set the index at the density
 
